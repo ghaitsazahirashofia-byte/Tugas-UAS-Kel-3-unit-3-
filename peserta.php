@@ -1,3 +1,25 @@
+<?php
+require_once 'config/koneksi.php';
+
+if (isset($_POST['simpan'])) {
+
+    $nim = $_POST['nim'];
+    $nama = $_POST['nama_peserta'];
+    $jk = $_POST['jenis_kelamin'];
+    $kelas = $_POST['kelas'];
+    $prodi = $_POST['prodi'];
+    $nohp = $_POST['no_hp'];
+    $alamat = $_POST['alamat'];
+
+    mysqli_query($conn,"INSERT INTO peserta
+    (nim,nama_peserta,jenis_kelamin,kelas,prodi,no_hp,alamat,status_peserta)
+    VALUES
+    ('$nim','$nama','$jk','$kelas','$prodi','$nohp','$alamat','aktif')");
+    header("Location: peserta.php");
+    Exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -23,15 +45,15 @@
 
         <div class="menu-label">Menu Utama</div>
         <ul class="nav-menu">
-            <li><a href="dashboard.php" class="active">🏠 Dashboard</a></li>
-            <li><a href="peserta.php">👥 Data Peserta</a></li>
+            <li><a href="dashboard.php">🏠 Dashboard</a></li>
+            <li><a href="peserta.php" class="active">👥 Data Peserta</a></li>
             <li><a href="absensi.php">📝 Input Absensi</a></li>
             <li><a href="rekap.php">📊 Rekap Kehadiran</a></li>
         </ul>
 
         <div class="menu-label">Akun</div>
         <ul class="nav-menu">
-            <li><a href="#">🚪 Logout</a></li>
+            <li><a href="logout.php">🚪 Logout</a></li>
         </ul>
     </aside>
 
@@ -53,20 +75,20 @@
                     </div>
 
                     <div class="card-body">
-                        <form action="#" method="post">
+                        <form method="post">
                             <div class="mb-3">
                                 <label class="form-label">NIM</label>
-                                <input type="text" class="form-control" placeholder="Contoh: 230101001">
+                                <input type="text" class="form-control" name="nim"required>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">Nama Peserta</label>
-                                <input type="text" class="form-control" placeholder="Masukkan nama lengkap">
+                                <input type="text" class="form-control" name="nama_peserta"required>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">Jenis Kelamin</label>
-                                <select class="form-select">
+                                <select class="form-select" name="jenis_kelamin" required>
                                     <option value="">Pilih jenis kelamin</option>
                                     <option value="L">Laki-laki</option>
                                     <option value="P">Perempuan</option>
@@ -75,25 +97,25 @@
 
                             <div class="mb-3">
                                 <label class="form-label">Kelas</label>
-                                <input type="text" class="form-control" placeholder="Contoh: Unit 01">
+                                <input type="text" class="form-control" name="kelas"required>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">Program Studi</label>
-                                <input type="text" class="form-control" placeholder="Contoh: Pendidikan Teknologi Informasi">
+                                <input type="text" class="form-control" name="prodi"required>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">No. HP</label>
-                                <input type="text" class="form-control" placeholder="Contoh: 081234567890">
+                                <input type="text" class="form-control" name="no_hp"required>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">Alamat</label>
-                                <textarea class="form-control" rows="3" placeholder="Masukkan alamat"></textarea>
+                                <textarea class="form-control" name="alamat"required></textarea>
                             </div>
 
-                            <button type="submit" class="btn btn-primary w-100">
+                            <button type="submit" name="simpan" class="btn btn-primary w-100">
                                 Simpan Peserta
                             </button>
                         </form>
@@ -105,7 +127,13 @@
                 <div class="content-card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5>Daftar Peserta</h5>
-                        <span class="badge bg-primary rounded-pill">5 Peserta</span>
+                        <?php
+                        $jml = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM peserta"));
+                        ?>
+
+                        <span class="badge bg-primary rounded-pill">
+                            <?= $jml; ?> Peserta
+                        </span>
                     </div>
 
                     <div class="card-body">
@@ -137,70 +165,35 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    <?php
+                                    $no = 1;
+                                    $data = mysqli_query($conn, "SELECT * FROM peserta");
+
+                                    while($d = mysqli_fetch_assoc($data)){
+                                    ?>
+
                                     <tr>
-                                        <td>1</td>
-                                        <td>230101001</td>
-                                        <td>Ahmad Fauzi</td>
-                                        <td>L</td>
-                                        <td>Unit 01</td>
-                                        <td><span class="badge bg-success">Aktif</span></td>
+                                        <td><?= $no++; ?></td>
+                                        <td><?= $d['nim']; ?></td>
+                                        <td><?= $d['nama_peserta']; ?></td>
+                                        <td><?= $d['jenis_kelamin']; ?></td>
+                                        <td><?= $d['kelas']; ?></td>
                                         <td>
-                                            <a href="#" class="btn btn-sm btn-outline-primary">Edit</a>
-                                            <a href="#" class="btn btn-sm btn-outline-danger">Hapus</a>
+                                            <?php
+                                            if($d['status_peserta']=="aktif"){
+                                                echo "<span class='badge bg-success'>Aktif</span>";
+                                            }else{
+                                                echo "<span class='badge bg-danger'>Nonaktif</span>";
+                                            }
+                                            ?>
+                                        </td>
+                                        <td>
+                                            <a href="edit_peserta.php?id=<?= $d['id_peserta']; ?>" class="btn btn-sm btn-outline-primary">Edit</a>
+                                            <a href="hapus_peserta.php?id=<?= $d['id_peserta']; ?>" class="btn btn-sm btn-outline-danger">Hapus</a>
                                         </td>
                                     </tr>
 
-                                    <tr>
-                                        <td>2</td>
-                                        <td>230101002</td>
-                                        <td>Siti Rahmah</td>
-                                        <td>P</td>
-                                        <td>Unit 01</td>
-                                        <td><span class="badge bg-success">Aktif</span></td>
-                                        <td>
-                                            <a href="#" class="btn btn-sm btn-outline-primary">Edit</a>
-                                            <a href="#" class="btn btn-sm btn-outline-danger">Hapus</a>
-                                        </td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>3</td>
-                                        <td>230101003</td>
-                                        <td>M. Ikhsan</td>
-                                        <td>L</td>
-                                        <td>Unit 01</td>
-                                        <td><span class="badge bg-success">Aktif</span></td>
-                                        <td>
-                                            <a href="#" class="btn btn-sm btn-outline-primary">Edit</a>
-                                            <a href="#" class="btn btn-sm btn-outline-danger">Hapus</a>
-                                        </td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>4</td>
-                                        <td>230101004</td>
-                                        <td>Nur Aisyah</td>
-                                        <td>P</td>
-                                        <td>Unit 01</td>
-                                        <td><span class="badge bg-success">Aktif</span></td>
-                                        <td>
-                                            <a href="#" class="btn btn-sm btn-outline-primary">Edit</a>
-                                            <a href="#" class="btn btn-sm btn-outline-danger">Hapus</a>
-                                        </td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>5</td>
-                                        <td>230101005</td>
-                                        <td>Rizky Maulana</td>
-                                        <td>L</td>
-                                        <td>Unit 01</td>
-                                        <td><span class="badge bg-success">Aktif</span></td>
-                                        <td>
-                                            <a href="#" class="btn btn-sm btn-outline-primary">Edit</a>
-                                            <a href="#" class="btn btn-sm btn-outline-danger">Hapus</a>
-                                        </td>
-                                    </tr>
+                                    <?php } ?>
                                 </tbody>
                             </table>
                         </div>
