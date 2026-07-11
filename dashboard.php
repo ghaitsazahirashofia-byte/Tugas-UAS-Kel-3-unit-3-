@@ -1,3 +1,27 @@
+<?php
+include "koneksi.php";
+
+$totalPeserta = mysqli_fetch_assoc(
+    mysqli_query($conn,"SELECT COUNT(*) AS total FROM peserta")
+);
+
+$hadir = mysqli_fetch_assoc(
+    mysqli_query($conn,"SELECT COUNT(*) AS total FROM absensi
+    WHERE status_kehadiran='hadir'")
+);
+
+$izinSakit = mysqli_fetch_assoc(
+    mysqli_query($conn,"SELECT COUNT(*) AS total FROM absensi
+    WHERE status_kehadiran IN ('izin','sakit')")
+);
+
+$alpa = mysqli_fetch_assoc(
+    mysqli_query($conn,"SELECT COUNT(*) AS total FROM absensi
+    WHERE status_kehadiran='alpa'")
+);
+?>
+
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -48,7 +72,7 @@
             <div class="col-md-3">
                 <div class="stat-card">
                     <div class="stat-icon bg-soft-primary">👥</div>
-                    <h3>32</h3>
+                    <h3><?= $totalPeserta['total']; ?></h3>
                     <p>Total Peserta</p>
                 </div>
             </div>
@@ -56,7 +80,7 @@
             <div class="col-md-3">
                 <div class="stat-card">
                     <div class="stat-icon bg-soft-success">✓</div>
-                    <h3>25</h3>
+                    <h3><?= $hadir['total']; ?></h3>
                     <p>Hadir Hari Ini</p>
                 </div>
             </div>
@@ -64,7 +88,7 @@
             <div class="col-md-3">
                 <div class="stat-card">
                     <div class="stat-icon bg-soft-warning">!</div>
-                    <h3>4</h3>
+                    <h3><?= $izinSakit['total']; ?></h3>
                     <p>Izin dan Sakit</p>
                 </div>
             </div>
@@ -72,7 +96,7 @@
             <div class="col-md-3">
                 <div class="stat-card">
                     <div class="stat-icon bg-soft-danger">×</div>
-                    <h3>3</h3>
+                    <h3><?= $alpa['total']; ?></h3>
                     <p>Alpa</p>
                 </div>
             </div>
@@ -83,7 +107,7 @@
                 <div class="content-card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5>Absensi Terbaru</h5>
-                        <a href="absensi.html" class="btn btn-sm btn-primary">Input Absensi</a>
+                        <a href="absensi.php" class="btn btn-sm btn-primary">Input Absensi</a>
                     </div>
 
                     <div class="card-body p-0">
@@ -99,46 +123,43 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>1</td>
-                                        <td>
-                                            <span class="avatar">AF</span>
-                                            Ahmad Fauzi
-                                        </td>
-                                        <td>Unit 01</td>
-                                        <td>01 Juli 2026</td>
-                                        <td><span class="badge-status badge-hadir">Hadir</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td>
-                                            <span class="avatar">SR</span>
-                                            Siti Rahmah
-                                        </td>
-                                        <td>Unit 01</td>
-                                        <td>01 Juli 2026</td>
-                                        <td><span class="badge-status badge-izin">Izin</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td>
-                                            <span class="avatar">MI</span>
-                                            M. Ikhsan
-                                        </td>
-                                        <td>Unit 01</td>
-                                        <td>01 Juli 2026</td>
-                                        <td><span class="badge-status badge-sakit">Sakit</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>4</td>
-                                        <td>
-                                            <span class="avatar">RM</span>
-                                            Rizky Maulana
-                                        </td>
-                                        <td>Unit 01</td>
-                                        <td>01 Juli 2026</td>
-                                        <td><span class="badge-status badge-alpa">Alpa</span></td>
-                                    </tr>
+
+                                <?php
+
+                                $no=1;
+
+                                $data = mysqli_query($conn,"
+                                SELECT
+                                absensi.*,
+                                peserta.nama_peserta,
+                                peserta.kelas
+                                FROM absensi
+                                JOIN peserta
+                                ON peserta.id_peserta=absensi.id_peserta
+                                ORDER BY tanggal DESC
+                                LIMIT 10
+                                ");
+
+                                while($d=mysqli_fetch_assoc($data)){
+
+                                ?>
+
+                                <tr>
+
+                                <td><?= $no++; ?></td>
+
+                                <td><?= $d['nama_peserta']; ?></td>
+
+                                <td><?= $d['kelas']; ?></td>
+
+                                <td><?= date('d-m-Y',strtotime($d['tanggal'])); ?></td>
+
+                                <td><?= ucfirst($d['status_kehadiran']); ?></td>
+
+                                </tr>
+
+                                <?php } ?>
+
                                 </tbody>
                             </table>
                         </div>
