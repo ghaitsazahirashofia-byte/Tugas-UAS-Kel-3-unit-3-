@@ -1,5 +1,5 @@
 <?php
-require_once 'config/koneksi.php';
+require_once 'koneksi.php';
 
 if (isset($_POST['simpan'])) {
 
