@@ -1,60 +1,85 @@
 <?php
-require_once 'koneksi.php';
+session_start();
 
-$pesan = '';
-
-$kelasResult = mysqli_query($conn, "SELECT DISTINCT kelas FROM peserta WHERE status_peserta='aktif' ORDER BY kelas");
-$kelasList = [];
-while ($row = mysqli_fetch_assoc($kelasResult)) {
-    $kelasList[] = $row['kelas'];
+if(!isset($_SESSION['id_user'])){
+    header("Location: index.php");
+    exit;
 }
 
-$tanggalFilter = isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d');
-$kelasFilter = isset($_GET['kelas']) ? $_GET['kelas'] : (count($kelasList) > 0 ? $kelasList[0] : '');
-$pesertaList = [];
+include "koneksi.php";
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['simpan'])) {
-    $tanggal = mysqli_real_escape_string($conn, $_POST['tanggal']);
-    $pesertaIds = $_POST['id_peserta'] ?? [];
-    $statusKehadiran = $_POST['status_kehadiran'] ?? [];
-    $keterangan = $_POST['keterangan'] ?? [];
+$nama = $_SESSION['nama_lengkap'];
+$role = $_SESSION['role'];
 
-    foreach ($pesertaIds as $index => $idPeserta) {
-        $idPeserta = intval($idPeserta);
-        $status = mysqli_real_escape_string($conn, $statusKehadiran[$index] ?? 'alpa');
-        $ket = mysqli_real_escape_string($conn, $keterangan[$index] ?? '');
+$halaman="absensi";
 
-        $checkQuery = "SELECT id_absensi FROM absensi WHERE id_peserta = $idPeserta AND tanggal = '$tanggal'";
-        $checkResult = mysqli_query($conn, $checkQuery);
+$tanggal = isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d');
+$kelas = isset($_GET['kelas']) ? $_GET['kelas'] : '';
 
-        if (mysqli_num_rows($checkResult) > 0) {
-            $row = mysqli_fetch_assoc($checkResult);
-            $idAbsensi = intval($row['id_absensi']);
-            mysqli_query($conn, "UPDATE absensi SET status_kehadiran = '$status', keterangan = '$ket' WHERE id_absensi = $idAbsensi");
-        } else {
-            mysqli_query($conn, "INSERT INTO absensi (id_peserta, tanggal, status_kehadiran, keterangan, created_by) 
-                VALUES ($idPeserta, '$tanggal', '$status', '$ket', 1)");
+// PROSES SIMPAN ABSENSI
+if(isset($_POST['simpan'])){
+
+    $tanggal = $_POST['tanggal'];
+    foreach($_POST['status'] as $id_peserta => $status){
+
+        $keterangan = $_POST['keterangan'][$id_peserta];
+        $status = mysqli_real_escape_string($conn,$status);
+        $keterangan = mysqli_real_escape_string($conn,$keterangan);
+
+
+        // cek apakah sudah ada absensi
+        $cek = mysqli_query($conn,"
+            SELECT * FROM absensi
+            WHERE id_peserta='$id_peserta'
+            AND tanggal='$tanggal'
+        ");
+
+
+        if(mysqli_num_rows($cek) > 0){
+
+            mysqli_query($conn,"
+            UPDATE absensi SET
+            status_kehadiran='$status',
+            keterangan='$keterangan'
+            WHERE id_peserta='$id_peserta'
+            AND tanggal='$tanggal'
+            ");
+
+        }else{
+
+            mysqli_query($conn,"
+            INSERT INTO absensi
+            (id_peserta,tanggal,status_kehadiran,keterangan)
+            VALUES
+            ('$id_peserta','$tanggal','$status','$keterangan')
+            ");
+
         }
+
     }
 
-    $pesan = '✓ Absensi berhasil disimpan.';
+
+    echo "
+    <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+
+    <script>
+
+    Swal.fire({
+        icon:'success',
+        title:'Berhasil!',
+        text:'Absensi berhasil disimpan.'
+    }).then(function(){
+
+    window.location='absensi.php?kelas=$kelas&tanggal=$tanggal';
+
+    });
+
+    </script>
+    ";
+
 }
 
-if ($kelasFilter) {
-    $kelasFilterEscaped = mysqli_real_escape_string($conn, $kelasFilter);
-    $query = "SELECT p.id_peserta, p.nim, p.nama_peserta, p.jenis_kelamin, 
-                     a.status_kehadiran, a.keterangan 
-              FROM peserta p 
-              LEFT JOIN absensi a ON p.id_peserta = a.id_peserta AND a.tanggal = '$tanggalFilter' 
-              WHERE p.kelas = '$kelasFilterEscaped' AND p.status_peserta = 'aktif' 
-              ORDER BY p.nama_peserta";
-    $result = mysqli_query($conn, $query);
-    while ($row = mysqli_fetch_assoc($result)) {
-        $pesertaList[] = $row;
-    }
-}
 ?>
-
 
 <!DOCTYPE html>
 <html lang="id">
@@ -67,6 +92,7 @@ if ($kelasFilter) {
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
+
 <div class="app-layout">
 
     <aside class="sidebar">
@@ -74,135 +100,246 @@ if ($kelasFilter) {
             <div class="logo-box">A</div>
             <div>
                 <h4>AbsensiApp</h4>
-                <small>Panel Administrator</small>
+                <small>
+                Panel <?= ucfirst($role); ?>
+                </small>
             </div>
         </div>
 
         <div class="menu-label">Menu Utama</div>
         <ul class="nav-menu">
-            <li><a href="dashboard.php">🏠 Dashboard</a></li>
-            <li><a href="peserta.php">👥 Data Peserta</a></li>
-            <li><a href="absensi.php" class="active">📝 Input Absensi</a></li>
-            <li><a href="rekap.php">📊 Rekap Kehadiran</a></li>
+
+        <li>
+        <a href="dashboard.php" class="<?= ($halaman=='dashboard')?'active':'' ?>">🏠 Dashboard
+        </a>
+        </li>
+
+        <?php if ($role == "admin") { ?>
+
+        <li>
+            <a href="peserta.php"
+            class="<?= ($halaman=='peserta')?'active':'' ?>">
+                👥 Data Peserta
+            </a>
+        </li>
+
+        <?php } ?>
+
+        <li>
+        <a href="absensi.php" class="<?= ($halaman=='absensi')?'active':'' ?>">📝 Input Absensi
+        </a>
+        </li>
+
+        <li>
+        <a href="rekap.php" class="<?= ($halaman=='rekap')?'active':'' ?>">📊 Rekap Kehadiran
+        </a>
+        </li>
+
         </ul>
 
         <div class="menu-label">Akun</div>
         <ul class="nav-menu">
-            <li><a href="#">🚪 Logout</a></li>
+            <li><a href="logout.php">🚪 Logout</a></li>
         </ul>
     </aside>
 
     <main class="main-content">
 
         <div class="topbar">
-            <div>
-                <h2>Input Absensi</h2>
-                <p>Input status kehadiran peserta berdasarkan tanggal dan kelas.</p>
-            </div>
-            <div class="user-pill">Administrator</div>
-        </div>
+    <div>
+        <h2>Input Absensi</h2>
+        <p>Input status kehadiran peserta berdasarkan tanggal dan kelas.</p>
+    </div>
 
-        <?php if ($pesan): ?>
-            <div class="alert alert-succes alert-dismissible fade show" role="alert">
-                <?=$pesan ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"><button>
-            </div>
-        <?php endif; ?>
+    <div class="user-pill">
+        <?= $nama; ?> (<?= ucfirst($role); ?>)
+    </div>
+
+</div>
+
 
         <div class="content-card mb-4">
-            <div class="card-header"><h5>Filter Absensi<h5></div>
+            <div class="card-header">
+                <h5>Filter Absensi</h5>
+            </div>
+
             <div class="card-body">
-                <form action="absensi.php" method="get" class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label">Tanggal Absensi</label>
-                        <input type="date" name="tanggal" class="form-control" value="<?= htmlspecialchars($tanggalFilter) ?>" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Kelas</label>
-                        <select name="kelas" class="form-select" required>
-                            <option value="">-- Pilih Kelas --</option>
-                            <?php foreach ($kelasList as $kelas): ?>
-                                <option value="<?= htmlspecialchars($kelas) ?>" <?= ($kelasFilter === $kelas) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($kelas) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-4 d-grid">
-                        <button type="submit" class="btn btn-primary">Tampilkan Peserta</button>
+                <form method="GET">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Tanggal Absensi</label>
+                            <input 
+                            type="date"
+                            class="form-control"
+                            name="tanggal"
+                            value="<?= isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d'); ?>">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Kelas</label>
+                            <select class="form-select" name="kelas">
+                            <option value="">-- Pilih Unit --</option>
+
+                            <?php
+                            $kelasQuery = mysqli_query($conn, 
+                            "SELECT DISTINCT kelas FROM peserta 
+                            WHERE status_peserta='aktif'");
+
+                            while($k = mysqli_fetch_assoc($kelasQuery)){
+                            ?>
+
+                            <option value="<?= $k['kelas']; ?>"
+                            <?= ($kelas == $k['kelas']) ? 'selected' : ''; ?>>
+                            <?= $k['kelas']; ?>
+                            </option>
+
+                            <?php } ?>
+
+                            </select>
+                        </div>
+
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                Tampilkan Peserta
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
 
-        <?php if ($kelasFilter && count($pesertaList) > 0): ?>
-            <div class="content-card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5>Form Kehadiran Peserta</h5>
-                    <span class="badge bg-primary rounded-pill"><?= htmlspecialchars($kelasFilter) ?> (<?= count($pesertaList) ?> peserta)</span>
-                </div>
-                <div class="card-body p-0">
-                    <form action="absensi.php" method="post">
-                        <input type="hidden" name="tanggal" value="<?= htmlspecialchars($tanggalFilter) ?>">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th width="60">No</th>
-                                        <th>NIM</th>
-                                        <th>Nama Peserta</th>
-                                        <th width="180">Status Kehadiran</th>
-                                        <th>Keterangan</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php $no = 1; foreach ($pesertaList as $peserta): ?>
-                                        <tr>
-                                            <td class="fw-bold"><?= $no++ ?></td>
-                                            <td><?= htmlspecialchars($peserta['nim']) ?></td>
-                                            <td>
-                                                <strong><?= htmlspecialchars($peserta['nama_peserta']) ?></strong><br>
-                                                <small class="text-muted"><?= $peserta['jenis_kelamin'] === 'L' ? 'Laki-laki' : 'Perempuan' ?></small>
-                                            </td>
-                                            <td>
-                                                <select name="status_kehadiran[]" class="form-select form-select-sm" required>
-                                                    <option value="hadir" <?= ($peserta['status_kehadiran'] === 'hadir') ? 'selected' : '' ?>>Hadir</option>
-                                                    <option value="izin" <?= ($peserta['status_kehadiran'] === 'izin') ? 'selected' : '' ?>>Izin</option>
-                                                    <option value="sakit" <?= ($peserta['status_kehadiran'] === 'sakit') ? 'selected' : '' ?>>Sakit</option>
-                                                    <option value="alpa" <?= ($peserta['status_kehadiran'] === 'alpa' || !$peserta['status_kehadiran']) ? 'selected' : '' ?>>Alpa</option>
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <input type="hidden" name="id_peserta[]" value="<?= intval($peserta['id_peserta']) ?>">
-                                                <input type="text" name="keterangan[]" class="form-control form-control-sm" value="<?= htmlspecialchars($peserta['keterangan'] ?? '') ?>" placeholder="Keterangan opsional">
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="card-footer bg-light d-flex justify-content-end gap-2">
-                            <a href="absensi.php" class="btn btn-secondary">Reset</a>
-                            <button type="submit" name="simpan" class="btn btn-success">Simpan Absensi</button>
-                        </div>
-                    </form>
-                </div>
+        <div class="content-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Form Kehadiran Peserta</h5>
+                <span class="badge bg-primary rounded-pill">
+                <?= $kelas ? $kelas : 'Belum dipilih'; ?>
+                </span>
             </div>
-        <?php elseif ($kelasFilter): ?>
-            <div class="content-card">
-                <div class="alert alert-info mb-0">
-                    Tidak ada peserta aktif di kelas <strong><?= htmlspecialchars($kelasFilter) ?></strong>.
-                </div>
-            </div>
-        <?php endif; ?>
-    </main>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-<style>
-    .fw-bold { font-weight: 600; }
-</style>
+            <div class="card-body p-0">
+                <form action="absensi.php" method="post">
+                    <input type="hidden" name="tanggal" value="<?= $tanggal ?>">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th width="60">No</th>
+                                    <th>NIM</th>
+                                    <th>Nama Peserta</th>
+                                    <th width="180">Status Kehadiran</th>
+                                    <th>Keterangan</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                            <?php if ($kelas == "") { ?>
+
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        Silakan pilih unit terlebih dahulu.
+                                    </td>
+                                </tr>
+
+                            <?php } else {
+
+                                $no = 1;
+
+                                $data = mysqli_query($conn, "
+                                    SELECT * FROM peserta
+                                    WHERE kelas='$kelas'
+                                    AND status_peserta='aktif'
+                                ");
+
+                                while ($d = mysqli_fetch_assoc($data)) {
+
+                                    $cekAbsen = mysqli_query($conn, "
+                                        SELECT * FROM absensi
+                                        WHERE id_peserta='".$d['id_peserta']."'
+                                        AND tanggal='$tanggal'
+                                    ");
+
+                                    $absen = mysqli_fetch_assoc($cekAbsen);
+
+                                    $statusAbsen = $absen['status_kehadiran'] ?? 'hadir';
+
+                                    $ket = $absen['keterangan'] ?? '';
+                            ?>
+
+                                <tr>
+
+                                    <td><?= $no++; ?></td>
+                                    <td><?= $d['nim']; ?></td>
+
+                                    <td><?= $d['nama_peserta']; ?></td>
+
+                                    <td>
+                                        <select class="form-select"
+                                            name="status[<?= $d['id_peserta']; ?>]">
+
+                                            <option value="hadir"
+                                                <?= ($statusAbsen == 'hadir') ? 'selected' : ''; ?>>
+                                                Hadir
+                                            </option>
+
+                                            <option value="izin"
+                                                <?= ($statusAbsen == 'izin') ? 'selected' : ''; ?>>
+                                                Izin
+                                            </option>
+
+                                            <option value="sakit"
+                                                <?= ($statusAbsen == 'sakit') ? 'selected' : ''; ?>>
+                                                Sakit
+                                            </option>
+
+                                            <option value="alpa"
+                                                <?= ($statusAbsen == 'alpa') ? 'selected' : ''; ?>>
+                                                Alpa
+                                            </option>
+
+                                        </select>
+                                    </td>
+
+                                    <td>
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            name="keterangan[<?= $d['id_peserta']; ?>]"
+                                            value="<?= $ket; ?>"
+                                            placeholder="Keterangan opsional">
+                                    </td>
+
+                                </tr>
+
+                            <?php }
+
+                            } ?>
+
+                        </tbody>
+                        </table>
+                    </div>
+
+                    <div class="p-4 border-top d-flex justify-content-end gap-2">
+                        <button type="reset" class="btn btn-outline-secondary">
+                            Reset
+                        </button>
+
+                        <?php if ($kelas != "") { ?>
+
+                        <button type="submit" name="simpan" class="btn btn-primary">
+                            Simpan Absensi
+                        </button>
+
+                        <?php } ?>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+</div>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/absensi.js"></script>
 </body>
 </html>
-
-           
