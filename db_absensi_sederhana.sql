@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 01, 2026 at 05:24 AM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- Waktu pembuatan: 17 Jul 2026 pada 18.17
+-- Versi server: 10.4.32-MariaDB
+-- Versi PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -24,7 +24,7 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Table structure for table `absensi`
+-- Struktur dari tabel `absensi`
 --
 
 CREATE TABLE `absensi` (
@@ -38,20 +38,32 @@ CREATE TABLE `absensi` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `absensi`
+-- Dumping data untuk tabel `absensi`
 --
 
 INSERT INTO `absensi` (`id_absensi`, `id_peserta`, `tanggal`, `status_kehadiran`, `keterangan`, `created_by`, `created_at`) VALUES
-(1, 1, '2026-07-01', 'hadir', 'Tepat waktu', 1, '2026-07-01 01:18:58'),
 (2, 2, '2026-07-01', 'izin', 'Izin keluarga', 1, '2026-07-01 01:18:58'),
 (3, 3, '2026-07-01', 'sakit', 'Sakit ringan', 1, '2026-07-01 01:18:58'),
 (4, 4, '2026-07-01', 'hadir', 'Tepat waktu', 1, '2026-07-01 01:18:58'),
-(5, 5, '2026-07-01', 'alpa', 'Tanpa keterangan', 1, '2026-07-01 01:18:58');
+(5, 5, '2026-07-01', 'alpa', 'Tanpa keterangan', 1, '2026-07-01 01:18:58'),
+(8, 3, '2026-07-16', 'alpa', '', 1, '2026-07-15 17:55:02'),
+(9, 4, '2026-07-16', 'alpa', '', 1, '2026-07-15 17:55:02'),
+(10, 5, '2026-07-16', 'alpa', '', 1, '2026-07-15 17:55:02'),
+(11, 2, '2026-07-16', 'alpa', '', 1, '2026-07-15 17:55:02'),
+(14, 3, '2026-07-17', 'hadir', '', 1, '2026-07-17 04:47:36'),
+(15, 4, '2026-07-17', 'hadir', '', 1, '2026-07-17 04:47:36'),
+(16, 5, '2026-07-17', 'hadir', '', 1, '2026-07-17 04:47:36'),
+(17, 2, '2026-07-17', 'alpa', '', 1, '2026-07-17 04:47:36'),
+(18, 7, '2026-07-17', 'alpa', '', 1, '2026-07-17 05:26:37'),
+(19, 9, '2026-07-17', 'hadir', '', 1, '2026-07-17 05:26:37'),
+(21, 8, '2026-07-17', 'hadir', '', 1, '2026-07-17 05:26:37'),
+(22, 11, '2026-07-17', 'hadir', '', 1, '2026-07-17 05:27:53'),
+(23, 13, '2026-07-17', 'sakit', '', NULL, '2026-07-17 13:34:49');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `peserta`
+-- Struktur dari tabel `peserta`
 --
 
 CREATE TABLE `peserta` (
@@ -68,20 +80,24 @@ CREATE TABLE `peserta` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `peserta`
+-- Dumping data untuk tabel `peserta`
 --
 
 INSERT INTO `peserta` (`id_peserta`, `nim`, `nama_peserta`, `jenis_kelamin`, `kelas`, `prodi`, `no_hp`, `alamat`, `status_peserta`, `created_at`) VALUES
-(1, '230101001', 'Ahmad Fauzi', 'L', 'Unit 01', 'Pendidikan Teknologi Informasi', '081234567001', 'Banda Aceh', 'aktif', '2026-07-01 01:18:58'),
 (2, '230101002', 'Siti Rahmah', 'P', 'Unit 01', 'Pendidikan Teknologi Informasi', '081234567002', 'Banda Aceh', 'aktif', '2026-07-01 01:18:58'),
 (3, '230101003', 'M. Ikhsan', 'L', 'Unit 01', 'Pendidikan Teknologi Informasi', '081234567003', 'Aceh Besar', 'aktif', '2026-07-01 01:18:58'),
 (4, '230101004', 'Nur Aisyah', 'P', 'Unit 01', 'Pendidikan Teknologi Informasi', '081234567004', 'Banda Aceh', 'aktif', '2026-07-01 01:18:58'),
-(5, '230101005', 'Rizky Maulana', 'L', 'Unit 01', 'Pendidikan Teknologi Informasi', '081234567005', 'Pidie', 'aktif', '2026-07-01 01:18:58');
+(5, '230101005', 'Rizky Maulana', 'L', 'Unit 01', 'Pendidikan Teknologi Informasi', '081234567005', 'Pidie', 'aktif', '2026-07-01 01:18:58'),
+(7, '230101006', 'Andi Saputra', 'L', 'Unit 01', 'Pendidikan Teknologi Informasi', '081234567006', 'Banda Aceh', 'aktif', '2026-07-17 05:26:10'),
+(8, '230101007', 'Rina Oktavia', 'P', 'Unit 01', 'Pendidikan Teknologi Informasi', '081234567007', 'Aceh Besar', 'aktif', '2026-07-17 05:26:10'),
+(9, '230101008', 'Fajar Ramadhan', 'L', 'Unit 01', 'Pendidikan Teknologi Informasi', '081234567008', 'Pidie', 'aktif', '2026-07-17 05:26:10'),
+(11, '25032487598754', 'M. poitf', 'P', 'unit 04', 'Pendidikan Teknologi Informasi', '082237973942', 'aceh', 'aktif', '2026-07-17 05:27:16'),
+(13, '2567827634', 'ib', 'P', 'Unit 03', 'Pendidikan Teknologi Informasi', '082237973942', 'ejeis', 'aktif', '2026-07-17 13:34:28');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `users`
+-- Struktur dari tabel `users`
 --
 
 CREATE TABLE `users` (
@@ -95,18 +111,18 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `users`
+-- Dumping data untuk tabel `users`
 --
 
 INSERT INTO `users` (`id_user`, `nama_lengkap`, `username`, `password_hash`, `role`, `status`, `created_at`) VALUES
-(1, 'Administrator', 'admin', 'password_hash_diisi_backend', 'admin', 'aktif', '2026-07-01 01:18:58'),
-(2, 'Operator Absensi', 'operator', 'password_hash_diisi_backend', 'operator', 'aktif', '2026-07-01 01:18:58');
+(1, 'Administrator', 'admin', 'admin2026', 'admin', 'aktif', '2026-07-01 01:18:58'),
+(2, 'Operator Absensi', 'operator', 'operator2026', 'operator', 'aktif', '2026-07-01 01:18:58');
 
 -- --------------------------------------------------------
 
 --
--- Stand-in structure for view `view_rekap_absensi`
--- (See below for the actual view)
+-- Stand-in struktur untuk tampilan `view_rekap_absensi`
+-- (Lihat di bawah untuk tampilan aktual)
 --
 CREATE TABLE `view_rekap_absensi` (
 `id_peserta` int(11)
@@ -125,7 +141,7 @@ CREATE TABLE `view_rekap_absensi` (
 -- --------------------------------------------------------
 
 --
--- Structure for view `view_rekap_absensi`
+-- Struktur untuk view `view_rekap_absensi`
 --
 DROP TABLE IF EXISTS `view_rekap_absensi`;
 
@@ -136,7 +152,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 
 --
--- Indexes for table `absensi`
+-- Indeks untuk tabel `absensi`
 --
 ALTER TABLE `absensi`
   ADD PRIMARY KEY (`id_absensi`),
@@ -144,47 +160,47 @@ ALTER TABLE `absensi`
   ADD KEY `fk_absensi_user` (`created_by`);
 
 --
--- Indexes for table `peserta`
+-- Indeks untuk tabel `peserta`
 --
 ALTER TABLE `peserta`
   ADD PRIMARY KEY (`id_peserta`),
   ADD UNIQUE KEY `nim` (`nim`);
 
 --
--- Indexes for table `users`
+-- Indeks untuk tabel `users`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id_user`),
   ADD UNIQUE KEY `username` (`username`);
 
 --
--- AUTO_INCREMENT for dumped tables
+-- AUTO_INCREMENT untuk tabel yang dibuang
 --
 
 --
--- AUTO_INCREMENT for table `absensi`
+-- AUTO_INCREMENT untuk tabel `absensi`
 --
 ALTER TABLE `absensi`
-  MODIFY `id_absensi` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_absensi` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
--- AUTO_INCREMENT for table `peserta`
+-- AUTO_INCREMENT untuk tabel `peserta`
 --
 ALTER TABLE `peserta`
-  MODIFY `id_peserta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_peserta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
--- AUTO_INCREMENT for table `users`
+-- AUTO_INCREMENT untuk tabel `users`
 --
 ALTER TABLE `users`
   MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- Constraints for dumped tables
+-- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)
 --
 
 --
--- Constraints for table `absensi`
+-- Ketidakleluasaan untuk tabel `absensi`
 --
 ALTER TABLE `absensi`
   ADD CONSTRAINT `fk_absensi_peserta` FOREIGN KEY (`id_peserta`) REFERENCES `peserta` (`id_peserta`) ON DELETE CASCADE ON UPDATE CASCADE,
