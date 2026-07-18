@@ -1,3 +1,43 @@
+<?php
+session_start();
+include "koneksi.php";
+?>
+if(isset($_POST['simpan'])){
+
+    $tanggal = $_POST['tanggal'];
+
+    foreach($_POST['status'] as $id_peserta => $status){
+
+        $keterangan = $_POST['keterangan'][$id_peserta];
+
+        // cek apakah peserta sudah diabsen pada tanggal tersebut
+        $cek = mysqli_query($conn,"
+        SELECT *
+        FROM absensi
+        WHERE id_peserta='$id_peserta'
+        AND tanggal='$tanggal'
+        ");
+
+        if(mysqli_num_rows($cek)==0){
+
+            mysqli_query($conn,"
+            INSERT INTO absensi
+            (id_peserta,tanggal,status_kehadiran,keterangan)
+            VALUES
+            ('$id_peserta','$tanggal','$status','$keterangan')
+            ");
+
+        }
+
+    }
+
+    echo "<script>
+    alert('Absensi berhasil disimpan');
+    window.location='absensi.php';
+    </script>";
+
+}
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -51,20 +91,38 @@
             </div>
 
             <div class="card-body">
-                <form action="#" method="get">
+                <form method="GET">
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label">Tanggal Absensi</label>
-                            <input type="date" class="form-control" value="2026-07-01">
+                            <input 
+                            type="date"
+                            class="form-control"
+                            name="tanggal"
+                            value="<?= isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d'); ?>">
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label">Kelas</label>
-                            <select class="form-select">
-                                <option>Unit 01</option>
-                                <option>Unit 02</option>
-                                <option>Unit 03</option>
+                            <select class="form-select" name="kelas">
+
+                            <option value="Unit 01"
+                            <?= ($kelas=="Unit 01")?"selected":"";?>>
+                            Unit 01
+                            </option>
+
+                            <option value="Unit 02"
+                            <?= ($kelas=="Unit 02")?"selected":"";?>>
+                            Unit 02
+                            </option>
+
+                            <option value="Unit 03"
+                            <?= ($kelas=="Unit 03")?"selected":"";?>>
+                            Unit 03
+                            </option>
+
                             </select>
+
                         </div>
 
                         <div class="col-md-4 d-flex align-items-end">
@@ -98,105 +156,55 @@
                             </thead>
 
                             <tbody>
-                                <tr>
-                                    <td>1</td>
-                                    <td>230101001</td>
-                                    <td>
-                                        <span class="avatar">AF</span>
-                                        Ahmad Fauzi
-                                    </td>
-                                    <td>
-                                        <select class="form-select">
-                                            <option value="hadir">Hadir</option>
-                                            <option value="izin">Izin</option>
-                                            <option value="sakit">Sakit</option>
-                                            <option value="alpa">Alpa</option>
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <input type="text" class="form-control" placeholder="Keterangan opsional">
-                                    </td>
-                                </tr>
+                                <tbody>
+
+                                <?php
+
+                                $kelas = isset($_GET['kelas']) ? $_GET['kelas'] : "Unit 01";
+
+
+                                $no = 1;
+
+                                $data = mysqli_query($conn,"
+                                SELECT *
+                                FROM peserta
+                                WHERE kelas='$kelas'
+                                ORDER BY nama_peserta ASC
+                                ");
+
+                                while($d = mysqli_fetch_assoc($data)){
+
+                                ?>
 
                                 <tr>
-                                    <td>2</td>
-                                    <td>230101002</td>
+
+                                    <td><?= $no++; ?></td>
+                                        <td><?= $d['nim']; ?></td>
+
                                     <td>
-                                        <span class="avatar">SR</span>
-                                        Siti Rahmah
+                                        <?= $d['nama_peserta']; ?>
                                     </td>
+
                                     <td>
-                                        <select class="form-select">
-                                            <option value="hadir">Hadir</option>
-                                            <option value="izin">Izin</option>
-                                            <option value="sakit">Sakit</option>
-                                            <option value="alpa">Alpa</option>
+                                        <select class="form-select" name="status[<?= $d['id_peserta']; ?>]">
+                                            <option value="Hadir">Hadir</option>
+                                            <option value="Izin">Izin</option>
+                                            <option value="Sakit">Sakit</option>
+                                            <option value="Alpa">Alpa</option>
                                         </select>
                                     </td>
+
                                     <td>
-                                        <input type="text" class="form-control" placeholder="Keterangan opsional">
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            name="keterangan[<?= $d['id_peserta']; ?>]"
+                                            placeholder="Keterangan opsional">
                                     </td>
+
                                 </tr>
 
-                                <tr>
-                                    <td>3</td>
-                                    <td>230101003</td>
-                                    <td>
-                                        <span class="avatar">MI</span>
-                                        M. Ikhsan
-                                    </td>
-                                    <td>
-                                        <select class="form-select">
-                                            <option value="hadir">Hadir</option>
-                                            <option value="izin">Izin</option>
-                                            <option value="sakit">Sakit</option>
-                                            <option value="alpa">Alpa</option>
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <input type="text" class="form-control" placeholder="Keterangan opsional">
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td>4</td>
-                                    <td>230101004</td>
-                                    <td>
-                                        <span class="avatar">NA</span>
-                                        Nur Aisyah
-                                    </td>
-                                    <td>
-                                        <select class="form-select">
-                                            <option value="hadir">Hadir</option>
-                                            <option value="izin">Izin</option>
-                                            <option value="sakit">Sakit</option>
-                                            <option value="alpa">Alpa</option>
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <input type="text" class="form-control" placeholder="Keterangan opsional">
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td>5</td>
-                                    <td>230101005</td>
-                                    <td>
-                                        <span class="avatar">RM</span>
-                                        Rizky Maulana
-                                    </td>
-                                    <td>
-                                        <select class="form-select">
-                                            <option value="hadir">Hadir</option>
-                                            <option value="izin">Izin</option>
-                                            <option value="sakit">Sakit</option>
-                                            <option value="alpa">Alpa</option>
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <input type="text" class="form-control" placeholder="Keterangan opsional">
-                                    </td>
-                                </tr>
+                                <?php } ?>
                             </tbody>
                         </table>
                     </div>
@@ -205,7 +213,10 @@
                         <button type="reset" class="btn btn-outline-secondary">
                             Reset
                         </button>
-                        <button type="submit" class="btn btn-primary">
+                        <button 
+                        type="submit"
+                        name="simpan"
+                        class="btn btn-primary">
                             Simpan Absensi
                         </button>
                     </div>

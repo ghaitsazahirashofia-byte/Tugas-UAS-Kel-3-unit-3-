@@ -48,7 +48,7 @@
                                         <a href="#" class="text-primary fw-semibold">Lupa password?</a>
                                     </div>
 
-                                    <a href="dashboard.html" class="btn btn-primary w-100">
+                                    <a href="dashboard.php" class="btn btn-primary w-100">
                                         Login
                                     </a>
                                 </form>
