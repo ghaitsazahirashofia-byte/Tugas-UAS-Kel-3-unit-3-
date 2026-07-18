@@ -1,3 +1,36 @@
+<?php
+include "koneksi.php";
+$halaman = "rekap";
+
+$tglMulai = isset($_GET['mulai']) ? $_GET['mulai'] : date('Y-m-01');
+$tglSelesai = isset($_GET['selesai']) ? $_GET['selesai'] : date('Y-m-d');
+
+$kelas = isset($_GET['kelas']) ? $_GET['kelas'] : '';
+$whereStat = "";
+
+if ($kelas != "") {
+    $whereStat = "AND p.kelas='$kelas'";
+}
+
+$statistik = mysqli_fetch_assoc(mysqli_query($conn, "
+    SELECT
+
+    SUM(a.status_kehadiran='hadir') AS hadir,
+    SUM(a.status_kehadiran='izin') AS izin,
+    SUM(a.status_kehadiran='sakit') AS sakit,
+    SUM(a.status_kehadiran='alpa') AS alpa
+
+    FROM absensi a
+
+    JOIN peserta p
+    ON a.id_peserta = p.id_peserta
+
+    WHERE a.tanggal BETWEEN '$tglMulai' AND '$tglSelesai'
+
+    $whereStat
+"));
+?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -23,15 +56,34 @@
 
         <div class="menu-label">Menu Utama</div>
         <ul class="nav-menu">
-            <li><a href="dashboard.php" class="active">🏠 Dashboard</a></li>
-            <li><a href="peserta.php">👥 Data Peserta</a></li>
-            <li><a href="absensi.php">📝 Input Absensi</a></li>
-            <li><a href="rekap.php">📊 Rekap Kehadiran</a></li>
+            <li>
+                <a href="dashboard.php" class="<?= ($halaman=='dashboard')?'active':'' ?>">
+                🏠 Dashboard
+                </a>
+                </li>
+
+            <li>
+                <a href="peserta.php" class="<?= ($halaman=='peserta')?'active':'' ?>">
+                👥 Data Peserta
+                </a>
+                </li>
+
+            <li>
+                <a href="absensi.php" class="<?= ($halaman=='absensi')?'active':'' ?>">
+                📝 Input Absensi
+                </a>
+                </li>
+
+            <li>
+                <a href="rekap.php" class="<?= ($halaman=='rekap')?'active':'' ?>">
+                📊 Rekap Kehadiran
+                </a>
+                </li>
         </ul>
 
         <div class="menu-label">Akun</div>
         <ul class="nav-menu">
-            <li><a href="#">🚪 Logout</a></li>
+            <li><a href="logout.php">🚪 Logout</a></li>
         </ul>
     </aside>
 
@@ -55,22 +107,47 @@
                     <div class="row g-3">
                         <div class="col-md-3">
                             <label class="form-label">Tanggal Mulai</label>
-                            <input type="date" class="form-control" value="2026-07-01">
+                            <input type="date" 
+                            name="mulai"
+                            class="form-control"
+                            value="<?= $tglMulai ?>">
                         </div>
 
                         <div class="col-md-3">
                             <label class="form-label">Tanggal Selesai</label>
-                            <input type="date" class="form-control" value="2026-07-31">
+                            <input type="date"
+                            name="selesai"
+                            class="form-control"
+                            value="<?= $tglSelesai ?>">
                         </div>
 
                         <div class="col-md-3">
                             <label class="form-label">Kelas</label>
-                            <select class="form-select">
-                                <option>Semua Kelas</option>
-                                <option>Unit 01</option>
-                                <option>Unit 02</option>
-                                <option>Unit 03</option>
+
+                            <select class="form-select" name="kelas">
+
+                                <option value="">Semua Kelas</option>
+
+                                <?php
+
+                                $qkelas = mysqli_query($conn,"
+                                SELECT DISTINCT kelas FROM peserta
+                                WHERE status_peserta='aktif'
+                                ");
+
+                                while($k = mysqli_fetch_assoc($qkelas)){
+
+                                ?>
+
+                                <option value="<?= $k['kelas'] ?>"
+                                <?= ($kelas == $k['kelas']) ? 'selected' : '' ?>>
+                                    <?= $k['kelas'] ?>
+                                </option>
+
+                                <?php } ?>
+
                             </select>
+
                         </div>
 
                         <div class="col-md-3 d-flex align-items-end">
@@ -87,7 +164,7 @@
             <div class="col-md-3">
                 <div class="stat-card">
                     <div class="stat-icon bg-soft-success">✓</div>
-                    <h3>80</h3>
+                    <h3><?= $statistik['hadir'] ?? 0 ?></h3>
                     <p>Total Hadir</p>
                 </div>
             </div>
@@ -95,7 +172,7 @@
             <div class="col-md-3">
                 <div class="stat-card">
                     <div class="stat-icon bg-soft-primary">i</div>
-                    <h3>8</h3>
+                    <h3><?= $statistik['izin'] ?? 0 ?></h3>
                     <p>Total Izin</p>
                 </div>
             </div>
@@ -103,7 +180,7 @@
             <div class="col-md-3">
                 <div class="stat-card">
                     <div class="stat-icon bg-soft-warning">+</div>
-                    <h3>5</h3>
+                    <h3><?= $statistik['sakit'] ?? 0 ?></h3>
                     <p>Total Sakit</p>
                 </div>
             </div>
@@ -111,7 +188,7 @@
             <div class="col-md-3">
                 <div class="stat-card">
                     <div class="stat-icon bg-soft-danger">×</div>
-                    <h3>7</h3>
+                    <h3><?= $statistik['alpa'] ?? 0 ?></h3>
                     <p>Total Alpa</p>
                 </div>
             </div>
@@ -120,7 +197,11 @@
         <div class="content-card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5>Tabel Rekap Kehadiran</h5>
-                <a href="#" class="btn btn-sm btn-outline-primary">Cetak Rekap</a>
+                <a href="cetak_rekap.php?mulai=<?= $tglMulai ?>&selesai=<?= $tglSelesai ?>&kelas=<?= $kelas ?>"
+                    target="_blank"
+                    class="btn btn-sm btn-outline-primary">
+                        Cetak Rekap
+                </a>
             </div>
 
             <div class="card-body p-0">
@@ -142,105 +223,76 @@
                         </thead>
 
                         <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>230101001</td>
-                                <td>Ahmad Fauzi</td>
-                                <td>Unit 01</td>
-                                <td><span class="badge-status badge-hadir">12</span></td>
-                                <td><span class="badge-status badge-izin">1</span></td>
-                                <td><span class="badge-status badge-sakit">0</span></td>
-                                <td><span class="badge-status badge-alpa">0</span></td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="progress flex-grow-1">
-                                            <div class="progress-bar bg-success" style="width: 92%"></div>
-                                        </div>
-                                        <span class="fw-bold">92%</span>
-                                    </div>
-                                </td>
-                                <td>Baik</td>
-                            </tr>
+                        <?php
+                        $where = "";
 
-                            <tr>
-                                <td>2</td>
-                                <td>230101002</td>
-                                <td>Siti Rahmah</td>
-                                <td>Unit 01</td>
-                                <td><span class="badge-status badge-hadir">10</span></td>
-                                <td><span class="badge-status badge-izin">2</span></td>
-                                <td><span class="badge-status badge-sakit">1</span></td>
-                                <td><span class="badge-status badge-alpa">0</span></td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="progress flex-grow-1">
-                                            <div class="progress-bar bg-success" style="width: 77%"></div>
-                                        </div>
-                                        <span class="fw-bold">77%</span>
-                                    </div>
-                                </td>
-                                <td>Cukup</td>
-                            </tr>
+                        if($kelas != ""){
+                            $where = "AND p.kelas='$kelas'";
+                        }
+                        $query = mysqli_query($conn,"
+                        SELECT 
+                        p.nim,
+                        p.nama_peserta,
+                        p.kelas,
 
-                            <tr>
-                                <td>3</td>
-                                <td>230101003</td>
-                                <td>M. Ikhsan</td>
-                                <td>Unit 01</td>
-                                <td><span class="badge-status badge-hadir">9</span></td>
-                                <td><span class="badge-status badge-izin">1</span></td>
-                                <td><span class="badge-status badge-sakit">1</span></td>
-                                <td><span class="badge-status badge-alpa">2</span></td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="progress flex-grow-1">
-                                            <div class="progress-bar bg-warning" style="width: 69%"></div>
-                                        </div>
-                                        <span class="fw-bold">69%</span>
-                                    </div>
-                                </td>
-                                <td>Perlu perhatian</td>
-                            </tr>
+                        SUM(a.status_kehadiran='hadir') AS hadir,
+                        SUM(a.status_kehadiran='izin') AS izin,
+                        SUM(a.status_kehadiran='sakit') AS sakit,
+                        SUM(a.status_kehadiran='alpa') AS alpa
 
-                            <tr>
-                                <td>4</td>
-                                <td>230101004</td>
-                                <td>Nur Aisyah</td>
-                                <td>Unit 01</td>
-                                <td><span class="badge-status badge-hadir">12</span></td>
-                                <td><span class="badge-status badge-izin">0</span></td>
-                                <td><span class="badge-status badge-sakit">1</span></td>
-                                <td><span class="badge-status badge-alpa">0</span></td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="progress flex-grow-1">
-                                            <div class="progress-bar bg-success" style="width: 92%"></div>
-                                        </div>
-                                        <span class="fw-bold">92%</span>
-                                    </div>
-                                </td>
-                                <td>Baik</td>
-                            </tr>
+                        FROM peserta p
 
-                            <tr>
-                                <td>5</td>
-                                <td>230101005</td>
-                                <td>Rizky Maulana</td>
-                                <td>Unit 01</td>
-                                <td><span class="badge-status badge-hadir">8</span></td>
-                                <td><span class="badge-status badge-izin">2</span></td>
-                                <td><span class="badge-status badge-sakit">1</span></td>
-                                <td><span class="badge-status badge-alpa">2</span></td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="progress flex-grow-1">
-                                            <div class="progress-bar bg-danger" style="width: 62%"></div>
-                                        </div>
-                                        <span class="fw-bold">62%</span>
-                                    </div>
-                                </td>
-                                <td>Perlu pembinaan</td>
-                            </tr>
+                        LEFT JOIN absensi a 
+                        ON p.id_peserta=a.id_peserta
+
+                        AND a.tanggal BETWEEN '$tglMulai'
+                        AND '$tglSelesai'
+
+                        WHERE p.status_peserta='aktif'
+                        $where
+                        GROUP BY p.id_peserta
+                        ORDER BY p.nama_peserta
+
+                        ");
+                        $no=1;
+
+                        while($d=mysqli_fetch_assoc($query)){
+
+
+                        $total = $d['hadir']+$d['izin']+$d['sakit']+$d['alpa'];
+
+                        $persen = ($total>0) ? round(($d['hadir']/$total)*100) : 0;
+
+
+                        ?>
+
+                        <tr>
+                        <td><?= $no++ ?></td>
+                        <td><?= $d['nim'] ?></td>
+                        <td><?= $d['nama_peserta'] ?></td>
+                        <td><?= $d['kelas'] ?></td>
+                        <td><?= $d['hadir'] ?></td>
+                        <td><?= $d['izin'] ?></td>
+                        <td><?= $d['sakit'] ?></td>
+                        <td><?= $d['alpa'] ?></td>
+                        <td>
+                        <?= $persen ?>%
+                        </td>
+                        <td>
+                        <?php
+                        if($persen>=80){
+                        echo "Baik";
+                        }
+                        elseif($persen>=60){
+                        echo "Cukup";
+                        }
+                        else{
+                        echo "Perlu perhatian";
+                        }
+                        ?>
+                        </td>
+                        </tr>
+                        <?php } ?>
                         </tbody>
                     </table>
                 </div>
@@ -250,6 +302,7 @@
     </main>
 
 </div>
-
+<script src="assets/js/main.js"></script>
+<script src="assets/js/rekap.js"></script>
 </body>
 </html>
